@@ -11,15 +11,13 @@ Der Auftrag umfasst Planung und Umsetzung.
 - Alle fachlichen und technischen Entscheidungen stehen unten unter „Entscheidungen“. Sie stammen von mir und sind bindend.
 - Frag nur, was dort nicht steht und Folgen für die Spieler hat.
 - Alles andere entscheidest du nach deiner Empfehlung und hältst es mit Grund im Plan fest.
-- Verlangt eine Regel etwas, das es hier nicht gibt, etwa Tracker oder Pull Request: als Ausnahme im Plan festhalten, nicht nachfragen.
-- Halte nur zweimal an: für die Freigabe des Plans und vor dem Merge in den Startbranch.
+- Verlangt eine Regel etwas, das es hier nicht gibt, etwa Tracker, Pull Request oder CI: Es gelten die genehmigten Ausnahmen unter „Genehmigte Ausnahmen“. Übernimm sie unverändert in den Plan. Erfinde keine eigenen dazu.
+- Passt keine dieser Ausnahmen und fehlt etwas, das es hier nicht gibt: als offenen Punkt im Plan festhalten, nicht nachfragen.
+- Halte nur zweimal an: für die Freigabe des Plans und vor dem Merge.
 
 ## Rahmen
 
-- Arbeitsverzeichnis ist dieses Verzeichnis `Benchmark-001/` im Repository `Harness-Benchmarks`.
-- Alle Pfade in diesem Auftrag sind relativ zu diesem Verzeichnis.
-- Außerhalb dieses Verzeichnisses änderst du nichts.
-- `requirement.md` und `README.md` in diesem Verzeichnis änderst du nicht.
+- Pfade in diesem Auftrag sind relativ zum Wurzelverzeichnis des Projekts.
 - Projektname: `vier-gewinnt`.
 - Reines HTML, JavaScript und CSS. Kein Framework, keine Bibliothek, kein TypeScript.
 - JavaScript als ES-Module, Sprachstand ES2022.
@@ -29,6 +27,7 @@ Der Auftrag umfasst Planung und Umsetzung.
 - Keine Laufzeit-Abhängigkeiten.
 - Einfache App: eine Seite, kein Routing, keine Konten, keine Einstellungen, keine Mehrsprachigkeit.
 - Keine CI, kein Deployment.
+- Kein Python. `python` ist auf diesem Rechner nur ein Platzhalter des Stores und hängt beim Aufruf. Hilfsskripte nur mit Node oder der Shell.
 
 ## Projektregeln
 
@@ -41,27 +40,21 @@ Der Auftrag umfasst Planung und Umsetzung.
 - Prüfnotiz zum Plan: `docs/plans/WI-1-pruefnotiz.md`.
 - Review-Notiz: `docs/reviews/WI-1.md`.
 - ADRs: `docs/adr/`, fortlaufend nummeriert. Die zwei ADRs unten legst du dort ab.
+- Kein Push und kein Pull Request. Merge erst nach meinem Ja.
 - Commits: Conventional Commits, deutsch, Betreff höchstens 60 Zeichen.
-
-## Git
-
-- Startbranch ist der Branch, auf dem diese Sitzung beginnt. Er ist der Integrationsbranch dieses Laufs.
-- Arbeitsbranch: `<startbranch>-wi-1`.
-- Auf `main` committest du nie.
-- Das Repository hat ein Remote. Du pushst nicht und erstellst keinen Pull Request.
-- Ersatz für den Pull Request: Arbeitsbranch lokal, Review-Notiz als Datei, Merge in den Startbranch erst nach meinem Ja.
-- Du committest nur Dateien in diesem Verzeichnis.
 
 ## Teststrategie
 
 - Spiellogik: Unit-Tests ohne DOM-Zugriff, je Regel mindestens ein Positiv- und ein Negativfall.
 - Oberfläche: Tests über das gerenderte DOM, nicht über interne Zustände.
 - Unit- und Oberflächentests: Vitest, für die Oberfläche mit jsdom.
-- Ein End-to-End-Test mit Playwright, nur Chromium, für den Hauptpfad: Spiel starten, bis zum Sieg spielen, neu starten.
+- Genau ein End-to-End-Test mit Playwright, nur Chromium, für den Hauptpfad: Spiel starten, bis zum Sieg spielen, neu starten.
+- Weitere Playwright-Tests werden nicht eingecheckt. Die Prüfung an der laufenden Anwendung regelt „Prozess“.
 - Tests laufen ohne Netzwerk und ohne feste Wartezeiten.
 - Lint: ESLint mit den empfohlenen Regeln für JavaScript.
 - Start, Test, End-to-End und Lint laufen je über einen Befehl aus `package.json`.
 - Kein fester Schwellwert für die Abdeckung.
+- Keine Mutationsproben: Code wird nicht absichtlich verändert, um Tests fehlschlagen zu sehen, auch nicht im Review. Den Nachweis, dass ein Test ohne die Änderung fehlschlägt, liefert der rote Lauf beim Schreiben des Tests vor dem Code.
 
 ## ADRs
 
@@ -79,9 +72,9 @@ Als zwei Spieler an einem Gerät wollen wir mehrere Partien Vier gewinnt spielen
 
 ### Gerüst
 
-- AC-01: Gegeben das Repository, wenn ich den Start-Befehl ausführe und die Seite im Browser öffne, dann lädt sie ohne Fehler in der Browser-Konsole.
-- AC-02: Gegeben das Repository, wenn ich den Test-Befehl ausführe, dann sind alle Tests grün.
-- AC-03: Gegeben das Repository, wenn ich den Lint-Befehl ausführe, dann endet er ohne Befund.
+- AC-01: Gegeben das Projekt, wenn ich den Start-Befehl ausführe und die Seite im Browser öffne, dann lädt sie ohne Fehler in der Browser-Konsole.
+- AC-02: Gegeben das Projekt, wenn ich den Test-Befehl ausführe, dann sind alle Tests grün.
+- AC-03: Gegeben das Projekt, wenn ich den Lint-Befehl ausführe, dann endet er ohne Befund.
 - AC-04: Gegeben die gestartete Anwendung, wenn ich sie im Browser öffne, dann sehe ich die Überschrift „Vier gewinnt“ auf dunklem Hintergrund.
 
 ### Spielfeld und Züge
@@ -189,10 +182,11 @@ Von mir getroffen, bindend. Sie beantworten alle Fragen, die ich vorhersehen kon
 
 - Der Spielstand liegt im `sessionStorage`, unter genau einem Schlüssel, als JSON mit Versionsnummer.
 - Gemerkt werden Feld, Spieler am Zug, Punktestand, Startspieler, Namen und bei beendeter Partie das Ergebnis.
+- Nicht gemerkt wird der Hinweis aus AC-39.
 - Gespeichert wird nach jeder Änderung des Zustands.
 - Nicht lesbar ist: ungültiges JSON, unbekannte Version, falsche Struktur oder ein unmögliches Feld, etwa ein schwebender Stein.
 - Ein nicht lesbarer Stand wird ganz verworfen, auch Punktestand und Namen.
-- Der Hinweis dazu bleibt sichtbar bis zum ersten Zug oder bis „Neue Partie“.
+- Der Hinweis dazu bleibt im selben Seitenaufruf sichtbar bis zum ersten Zug oder bis „Neue Partie“. Nach erneutem Neuladen ist er nicht mehr zu sehen.
 - Ist `sessionStorage` nicht verfügbar, läuft das Spiel ohne Merken weiter, ohne Fehler und ohne Hinweis.
 - Jeder Tab hat seinen eigenen Stand. Tabs gleichen sich nicht ab.
 
@@ -219,7 +213,7 @@ Von mir getroffen, bindend. Sie beantworten alle Fragen, die ich vorhersehen kon
 
 ### Technik
 
-- Die Anwendung liegt direkt in diesem Verzeichnis: `index.html` oben, Quellen unter `src/`.
+- `index.html` liegt im Wurzelverzeichnis des Projekts, Quellen unter `src/`.
 - Aufbau unter `src/`: `game/` für Spielregeln, `state/` für den Store, `storage/` für das Merken, `ui/` für die Oberfläche, `css/` für Styles.
 - Module in `game/` und `state/` greifen nie auf DOM oder `sessionStorage` zu.
 - Die Oberfläche rendert aus dem Zustand und aktualisiert das DOM gezielt.
@@ -227,9 +221,9 @@ Von mir getroffen, bindend. Sie beantworten alle Fragen, die ich vorhersehen kon
 - Keine Web Components, keine Vorlagen-Bibliothek.
 - Kein Inline-JavaScript und kein Inline-CSS in `index.html`.
 - Typen als JSDoc-Kommentare, wo sie beim Lesen helfen. Kein Typprüfer.
-- Der Start-Befehl liefert das Verzeichnis über einen statischen Entwicklungsserver aus.
+- Der Start-Befehl liefert das Projekt über einen statischen Entwicklungsserver aus.
 - Öffnen per Doppelklick auf `index.html` muss nicht funktionieren.
-- Dieses Verzeichnis bekommt eine eigene `.gitignore`, mindestens für `node_modules` und Testberichte.
+- Das Projekt bekommt eine eigene `.gitignore`, mindestens für `node_modules` und Testberichte.
 - `package-lock.json` wird eingecheckt.
 - Styling mit reinem CSS, ohne Präprozessor.
 - Entwicklungs-Abhängigkeiten nur: Vitest, jsdom, Playwright, ESLint und ein statischer Entwicklungsserver.
@@ -246,19 +240,56 @@ Von mir getroffen, bindend. Sie beantworten alle Fragen, die ich vorhersehen kon
 
 - Ein Plan für das ganze Work Item. Ein Task-Schnitt im Plan ist erlaubt.
 - Ob du Tasks nacheinander oder parallel umsetzt, entscheidest du.
-- Wo das Harness einen eigenen Worktree verlangt, folgst du dem Harness.
-- Die Prüfung an der laufenden Anwendung läuft über Playwright.
+- Die Prüfung an der laufenden Anwendung läuft über Playwright, ohne neue Testdateien im Projekt.
+- Hilfsskripte dafür werden nicht Teil des Projekts und nicht committet.
+- Nachweis der Prüfung: geprüfte Kriterien und Ergebnis je Kriterium in der Review-Notiz.
 - Findings aus dem Review behebst du in höchstens zwei Runden.
 - Danach offene Findings MEDIUM und LOW hältst du als „Won't Fix“ mit Grund in der Review-Notiz fest.
 - Ist danach ein Finding BLOCKING oder HIGH offen, hältst du an und fragst mich.
-- Verlangt das Harness ein Log oder weitere Notizen, liegen sie unter `docs/` in diesem Verzeichnis.
+- Verlangt das Harness ein Log oder weitere Notizen, liegen sie unter `docs/`.
 - Es gibt keine Secrets und keine Lizenzdatei.
+
+## Genehmigte Ausnahmen
+
+Von mir genehmigt, gelten für den ganzen Lauf. Übernimm sie unverändert in den Plan.
+
+```
+EXCEPTION(BENCH-TRACKER): Es gibt keinen Tracker; Plan, Fragen, Antworten, Freigabe und Review-Notiz stehen nicht am Work Item, sondern in den Dateien unter „Projektregeln“, Fragen und Freigabe im Chat (AI-SE-3310 und Ablageorte aus plan-implementation und implement-work-item).
+Tracking: requirement.md, Abschnitt „Projektregeln“
+Revisit: wenn der Benchmark einen Tracker bekommt
+Approved: Auftraggeber, 2026-11-12
+
+EXCEPTION(BENCH-PR): Es gibt keinen Pull Request; an seine Stelle tritt die Review-Notiz, Begründung der Tests, Testlauf-Auszüge, Findings und Urteil stehen dort (AI-SE-3202, AI-SE-3215, AI-SE-3311, AI-SE-3319).
+Tracking: docs/reviews/WI-1.md
+Revisit: wenn der Benchmark Pull Requests bekommt
+Approved: Auftraggeber, 2026-11-12
+
+EXCEPTION(BENCH-CI): Es gibt keine CI; Tests, End-to-End und Lint laufen lokal über die Befehle aus package.json, das Log des letzten Laufs auf dem geprüften Stand steht als Nachweis in der Review-Notiz (AI-SE-3213, AI-SE-3214, AI-SE-3217, AI-SE-3221, AI-SE-3308).
+Tracking: docs/reviews/WI-1.md
+Revisit: wenn der Benchmark eine CI bekommt
+Approved: Auftraggeber, 2026-11-12
+
+EXCEPTION(BENCH-COVERAGE): Die Abdeckung wird nicht gemessen und nicht erzwungen, weil die Teststrategie keinen Schwellwert vorgibt; die Tests je Akzeptanzkriterium aus dem Plan ersetzen den Nachweis (AI-SE-3211, AI-SE-3222).
+Tracking: requirement.md, Abschnitt „Teststrategie“
+Revisit: wenn der Benchmark eine CI mit Abdeckungsbericht bekommt
+Approved: Auftraggeber, 2026-11-12
+
+EXCEPTION(BENCH-ORIGIN): Gearbeitet wird auf dem lokalen Stand, ohne Abgleich mit origin, weil nichts von origin geholt wird (AI-SE-4307).
+Tracking: requirement.md, Abschnitt „Projektregeln“
+Revisit: wenn gegen ein gemeinsames Remote gearbeitet wird
+Approved: Auftraggeber, 2026-11-12
+
+EXCEPTION(BENCH-MERGE): Gemergt wird lokal und erst nach meinem Ja; das ist der Ersatz für den Merge des Pull Requests (AI-SE-4105).
+Tracking: requirement.md, Abschnitt „Projektregeln“
+Revisit: wenn der Benchmark Pull Requests bekommt
+Approved: Auftraggeber, 2026-11-12
+```
 
 ## Ablauf
 
 1. Starte jetzt `plan-implementation` für WI-1.
 2. Lege mir Plan und Prüfnotiz zur Freigabe vor. Das ist der erste Halt.
 3. Nach meiner Freigabe: `implement-work-item` für WI-1, ohne weitere Rückfrage.
-4. Nach Umsetzung und Review: nenne Plan-Datei, Review-Notiz, Arbeitsbranch, Stand von Start, Tests und Lint sowie offene Punkte. Das ist der zweite Halt.
+4. Nach Umsetzung und Review: nenne Plan-Datei, Review-Notiz, Stand von Start, Tests und Lint sowie offene Punkte. Das ist der zweite Halt.
 5. Nenne dabei auch: Zahl deiner Rückfragen, Zahl der Fix-Runden, Zahl der Tests.
-6. Merge in den Startbranch erst nach meinem Ja.
+6. Merge erst nach meinem Ja.

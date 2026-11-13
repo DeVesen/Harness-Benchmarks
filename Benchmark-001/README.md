@@ -49,7 +49,7 @@
 
 - Fähigkeit, Lücken selbst zu finden: fast alle Fragen sind vorab beantwortet.
 - Schnittstellen, Datenhaltung, Infrastruktur, Betrieb.
-- Arbeit mit Tracker und Pull Request.
+- Arbeit mit Tracker, Pull Request und CI: die nötigen Ausnahmen gibt der Auftrag genehmigt vor.
 - Zusammenarbeit mehrerer Teams.
 
 ## Lauf durchführen
